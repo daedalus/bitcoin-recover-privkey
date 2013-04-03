@@ -135,19 +135,23 @@ def process_signatures(params):
 	tmp_r2,tmp_s2 = hex_der_decode(sig2)
 
 	if (tmp_r1 == tmp_r2): #r1 and r2 are equal the two signatures are weak and we can recover the private key
+
+ 		if (tmp_s1 != tmp_s2): # This: (s1-s2)>0 should be complied in order be able to compute the private key.
 		
-		r1 = int(tmp_r1.encode('hex'),16)
-		r2 = int(tmp_r2.encode('hex'),16)
-		s1 = int(tmp_s1.encode('hex'),16)
-		s2 = int(tmp_s2.encode('hex'),16)
+			r1 = int(tmp_r1.encode('hex'),16)
+			r2 = int(tmp_r2.encode('hex'),16)
+			s1 = int(tmp_s1.encode('hex'),16)
+			s2 = int(tmp_s2.encode('hex'),16)
 		
-		show_params(p,r1,s1,s2,z1,z2)
+			show_params(p,r1,s1,s2,z1,z2)
 			
-		privkey = derivate_privkey(p,r1,s1,s2,z1,z2)
+			privkey = derivate_privkey(p,r1,s1,s2,z1,z2)
 		
-		show_results(privkey)
+			show_results(privkey)
+		else:
+			print "Privkey not computable: s1 and s2 are equal."
 	else:
-		print "r1 and r2 are not equal"
+		print "Privkey not computable: r1 and r2 are not equal."
 
 def main():
 	process_signatures(params)

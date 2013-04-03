@@ -121,8 +121,7 @@ def inverse_mult(a,b,p):
 
 # Here is the wrock!
 def derivate_privkey(p,r,s1,s2,z1,z2):
-	point = inverse_mult(((z1*s2) - (z2*s1)),(r*(s1-s2)),p)
-	privkey = (point % int(p))
+	privkey = (inverse_mult(((z1*s2) - (z2*s1)),(r*(s1-s2)),p) % int(p))
 	return privkey
 
 def process_signatures(params):

@@ -8,7 +8,7 @@
 # in other hand for every other parameters you should be able to get them from the Tx itself.
 #
 # Author Dario Clavijo <daedalus2027@gmail.com> , Jan 2013
-# 1FMobgL3Z9uR3hM93LcrVxvDEyrfbquTSy
+# Donations: 1FMobgL3Z9uR3hM93LcrVxvDEyrfbquTSy
 #
 # Disclaimer: Do not steal other peoples money, that's bad.
 
@@ -78,32 +78,7 @@ def base58_check_encode(s, version=0):
     vs = chr(version) + s
     check = dhash(vs)[:4]
     return base58_encode_padded(vs + check)
-
-
-def inverse_mult(a,b,p):
-	y =  (a * pow(b,p-2,p))  #(pow(x, y) modulo z) where z should be a prime number
-	return y
-
-# here is the wrock!
-def derivate_privkey(p,r,s1,s2,z1,z2):
-	point = inverse_mult(((z1*s2) - (z2*s1)),(r*(s1-s2)),p)
-	privkey = (point % int(p))
-	return privkey
-
-def show_results(privkey):
-        hexprivkey = inttohexstr(privkey)	
-	print ("privkey = %d"  % privkey)
-	print ("hexprivkey = %s" % hexprivkey)
-	print "bitcoin private key = %s" % base58_check_encode(hexprivkey.decode('hex'),version=128)
-
-def show_params(p,r,s1,s2,z1,z2):
-	print "p = %d" % int(p)
-	print "r = %d" % int(r) 
-	print "s1 = %d" % int(s1) 
-	print "s2 = %d" % int(s2) 
-	print "z1 = %d" % int(z1)
-	print "z2 = %d" % int(z2) 
-
+	
 def get_der_field(i,binary):
         if (ord(binary[i]) == 02):
                 length = binary[i+1]
@@ -113,7 +88,8 @@ def get_der_field(i,binary):
         else:
                 return None
 
-def hex_der_decode(hexstring):
+# Here we decode a DER encoded string separating r and s
+def der_decode(hexstring):
         binary = unhexify(hexstring)
         full_length = ord(binary[1])
         if ((full_length + 3) == len(binary)):
@@ -123,6 +99,32 @@ def hex_der_decode(hexstring):
         else:
                 return None
 
+def show_results(privkey):
+        hexprivkey = inttohexstr(privkey)	
+	print "intPrivkey = %d"  % privkey
+	print "hexPrivkey = %s" % hexprivkey
+	print "bitcoin Privkey (WIF) = %s" % base58_check_encode(hexprivkey.decode('hex'),version=128)
+
+def show_params(params):
+	for param in params:
+		try:
+			print "%s: %s" % (param,inttohexstr(params[param]))
+		except:
+			print "%s: %s" % (param,params[param])
+
+# This is the same as (a/b mod p) but avoiding floating numbers since we are dealing with prime numbers and modulus
+# and beacuse this the python built in division isn't suitable for our needs, 
+# it returns floating point numbers rounded and we don't want them.
+def inverse_mult(a,b,p):
+	y =  (a * pow(b,p-2,p))  #(pow(a, b) modulo p) where p should be a prime number
+	return y
+
+# Here is the wrock!
+def derivate_privkey(p,r,s1,s2,z1,z2):
+	point = inverse_mult(((z1*s2) - (z2*s1)),(r*(s1-s2)),p)
+	privkey = (point % int(p))
+	return privkey
+
 def process_signatures(params):
 	
 	p = params['p']
@@ -131,30 +133,32 @@ def process_signatures(params):
 	z1 = params['z1']
 	z2 = params['z2']
 	
-	tmp_r1,tmp_s1 = hex_der_decode(sig1)
-	tmp_r2,tmp_s2 = hex_der_decode(sig2)
+	tmp_r1,tmp_s1 = der_decode(sig1) # Here we extract r and s from the signature encoded in DER.
+	tmp_r2,tmp_s2 = der_decode(sig2) # Idem.
 
-	if (tmp_r1 == tmp_r2): #r1 and r2 are equal the two signatures are weak and we can recover the private key
+	if (tmp_r1 == tmp_r2): # If r1 and r2 are equal the two signatures are weak and we can recover the private key.
 
  		if (tmp_s1 != tmp_s2): # This: (s1-s2)>0 should be complied in order be able to compute the private key.
 		
+			# the key of ECDSA are the integer numbers thats why we convert hexa from to them.
 			r1 = int(tmp_r1.encode('hex'),16)
 			r2 = int(tmp_r2.encode('hex'),16)
 			s1 = int(tmp_s1.encode('hex'),16)
 			s2 = int(tmp_s2.encode('hex'),16)
-		
-			show_params(p,r1,s1,s2,z1,z2)
-			
+	
 			privkey = derivate_privkey(p,r1,s1,s2,z1,z2)
-		
-			show_results(privkey)
+			return privkey		
+
 		else:
-			print "Privkey not computable: s1 and s2 are equal."
+			raise Exception("Privkey not computable: s1 and s2 are equal.")
 	else:
-		print "Privkey not computable: r1 and r2 are not equal."
+		raise Exception("Privkey not computable: r1 and r2 are not equal.")
 
 def main():
-	process_signatures(params)
+	show_params(params)
+	privkey = process_signatures(params)
+	if privkey:		
+		show_results(privkey)
 
 if __name__ == "__main__":
     main()

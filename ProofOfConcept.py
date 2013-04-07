@@ -10,6 +10,8 @@
 # Author Dario Clavijo <daedalus2027@gmail.com> , Jan 2013
 # Donations: 1FMobgL3Z9uR3hM93LcrVxvDEyrfbquTSy
 #
+# This code is licensed under the terms of the GPLv3 license http://gplv3.fsf.org/
+#
 # Disclaimer: Do not steal other peoples money, that's bad.
 
 

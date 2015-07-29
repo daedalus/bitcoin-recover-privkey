@@ -101,11 +101,13 @@ def der_decode(hexstring):
         else:
                 return None
 
-def show_results(privkey):
-        hexprivkey = inttohexstr(privkey)	
-	print "intPrivkey = %d"  % privkey
-	print "hexPrivkey = %s" % hexprivkey
-	print "bitcoin Privkey (WIF) = %s" % base58_check_encode(hexprivkey.decode('hex'),version=128)
+def show_results(privkeys):
+		print "Posible Candidates..."
+	for privkey in privkeys:
+        	hexprivkey = inttohexstr(privkey)
+		print "intPrivkey = %d"  % privkey
+		print "hexPrivkey = %s" % hexprivkey
+		print "bitcoin Privkey (WIF) = %s" % base58_check_encode(hexprivkey.decode('hex'),version=128)
 
 def show_params(params):
 	for param in params:
@@ -123,7 +125,14 @@ def inverse_mult(a,b,p):
 
 # Here is the wrock!
 def derivate_privkey(p,r,s1,s2,z1,z2):
-	privkey = (inverse_mult(((z1*s2) - (z2*s1)),(r*(s1-s2)),p) % int(p))
+	
+	privkey = []
+	
+	privkey.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(s1-s2)),p) % int(p)))
+	privkey.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(s1+s2)),p) % int(p)))
+	privkey.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(-s1-s2)),p) % int(p)))
+	privkey.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(-s1+s2)),p) % int(p)))
+	
 	return privkey
 
 def process_signatures(params):
@@ -158,7 +167,7 @@ def process_signatures(params):
 def main():
 	show_params(params)
 	privkey = process_signatures(params)
-	if privkey:		
+	if len(privkey)>0:		
 		show_results(privkey)
 
 if __name__ == "__main__":

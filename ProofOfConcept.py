@@ -8,7 +8,7 @@
 # in other hand for every other parameters you should be able to get them from the Tx itself.
 #
 # Author Dario Clavijo <daedalus2027@gmail.com> , Jan 2013
-# Donations: 1NeoJeD8XBnB4YwM1RGjCa3CUfKx6ws7Fc
+# Donations: 1LgWNdNTnzeNgNMzWHtPtXPjxcutJKu74r
 #
 # This code is licensed under the terms of the GPLv3 license http://gplv3.fsf.org/
 #

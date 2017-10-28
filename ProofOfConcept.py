@@ -111,7 +111,7 @@ def show_results(privkeys):
 
 def show_params(params):
 	for param in params:
-		try:
+		try ValueError as verr:
 			print "%s: %s" % (param,inttohexstr(params[param]))
 		except:
 			print "%s: %s" % (param,params[param])

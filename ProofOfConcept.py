@@ -103,11 +103,11 @@ def der_decode(hexstring):
 
 def show_results(privkeys):
 		print "Posible Candidates..."
-	for privkey in privkeys:
-        	hexprivkey = inttohexstr(privkey)
-		print "intPrivkey = %d"  % privkey
-		print "hexPrivkey = %s" % hexprivkey
-		print "bitcoin Privkey (WIF) = %s" % base58_check_encode(hexprivkey.decode('hex'),version=128)
+		for privkey in privkeys:
+        		hexprivkey = inttohexstr(privkey)
+			print "intPrivkey = %d"  % privkey
+			print "hexPrivkey = %s" % hexprivkey
+			print "bitcoin Privkey (WIF) = %s" % base58_check_encode(hexprivkey.decode('hex'),version=128)
 
 def show_params(params):
 	for param in params:

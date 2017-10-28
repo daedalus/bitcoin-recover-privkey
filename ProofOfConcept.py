@@ -151,19 +151,16 @@ def process_signatures(params):
 	tmp_r1,tmp_s1 = der_decode(sig1) # Here we extract r and s from the signature encoded in DER.
 	tmp_r2,tmp_s2 = der_decode(sig2) # Idem.
 
-	if (tmp_r1 == tmp_r2): # If r1 and r2 are equal the two signatures are weak and we can recover the private key.
+	# the key of ECDSA are the integer numbers thats why we convert hexa from to them.
+	r1 = int(tmp_r1.encode('hex'),16)
+	r2 = int(tmp_r2.encode('hex'),16)
+	s1 = int(tmp_s1.encode('hex'),16)
+	s2 = int(tmp_s2.encode('hex'),16)
 
- 		if (tmp_s1 != tmp_s2): # This: (s1-s2)>0 should be complied in order be able to compute the private key.
-
-			# the key of ECDSA are the integer numbers thats why we convert hexa from to them.
-			r1 = int(tmp_r1.encode('hex'),16)
-			r2 = int(tmp_r2.encode('hex'),16)
-			s1 = int(tmp_s1.encode('hex'),16)
-			s2 = int(tmp_s2.encode('hex'),16)
-
+	if (r1 == r2): # If r1 and r2 are equal the two signatures are weak and we can recover the private key.
+ 		if (s1 != s2): # This: (s1-s2)>0 should be complied in order be able to compute the private key.
 			privkey = derivate_privkey(p,r1,s1,s2,z1,z2)
 			return privkey
-
 		else:
 			raise Exception("Privkey not computable: s1 and s2 are equal.")
 	else:

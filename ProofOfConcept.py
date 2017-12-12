@@ -45,8 +45,8 @@ def unhexify (s, flip=False):
         return s.decode ('hex')
 
 def inttohexstr(i):
-	tmpstr = "%s" % hex(i)
-	hexstr = tmpstr.replace('0x','').replace('L','')
+	tmpstr = hex(i)
+	hexstr = tmpstr.replace('0x','').replace('L','').zfill(64)
 	return hexstr
 
 b58_digits = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
@@ -108,10 +108,12 @@ def show_results(privkeys):
 			print "intPrivkey = %d"  % privkey
 			print "hexPrivkey = %s" % hexprivkey
 			print "bitcoin Privkey (WIF) = %s" % base58_check_encode(hexprivkey.decode('hex'),version=128)
+			print "bitcoin Privkey (WIF compressed) = %s" % base58_check_encode((hexprivkey + "01").decode('hex'),version=128)
+
 
 def show_params(params):
 	for param in params:
-		try ValueError as verr:
+		try:
 			print "%s: %s" % (param,inttohexstr(params[param]))
 		except:
 			print "%s: %s" % (param,params[param])

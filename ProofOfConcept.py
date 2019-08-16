@@ -129,20 +129,23 @@ def inverse_mult(a,b,p):
 
 # Here is the wrock!
 def derivate_privkey(p,r,s1,s2,z1,z2):
+        privkey = []
 
-	privkeys = []
+        z1ms2 = z1*s2
+        z2ms1 = z2*s1
+        z1s2mz2s1 = z1ms2-z2ms1
+        z1s2pz2s1 = z1ms2+z2ms1
 
-	privkeys.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(s1-s2)),p) % int(p)))
-	privkeys.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(s1+s2)),p) % int(p)))
-	privkeys.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(-s1-s2)),p) % int(p)))
-	privkeys.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(-s1+s2)),p) % int(p)))
+        privkey.append((inverse_mult((z1s2mz2s1),(r*(s1-s2)),p) % int(p)))
+        privkey.append((inverse_mult((z1s2mz2s1),(r*(s1+s2)),p) % int(p)))
+        privkey.append((inverse_mult((z1s2mz2s1),(r*(-s1-s2)),p) % int(p)))
+        privkey.append((inverse_mult((z1s2mz2s1),(r*(-s1+s2)),p) % int(p)))
+        privkey.append((inverse_mult((z1s2pz2s1),(r*(s1-s2)),p) % int(p)))
+        privkey.append((inverse_mult((z1s2pz2s1),(r*(s1+s2)),p) % int(p)))
+        privkey.append((inverse_mult((z1s2pz2s1),(r*(-s1-s2)),p) % int(p)))
+        privkey.append((inverse_mult((z1s2pz2s1),(r*(-s1+s2)),p) % int(p)))
 
-	privkeys.append((inverse_mult(((z1*s2) + (z2*s1)),(r*(s1-s2)),p) % int(p)))
-        privkeys.append((inverse_mult(((z1*s2) + (z2*s1)),(r*(s1+s2)),p) % int(p)))
-        privkeys.append((inverse_mult(((z1*s2) + (z2*s1)),(r*(-s1-s2)),p) % int(p)))
-        privkeys.append((inverse_mult(((z1*s2) + (z2*s1)),(r*(-s1+s2)),p) % int(p)))
-
-	return privkeys
+        return privkey
 
 def process_signatures(params):
 

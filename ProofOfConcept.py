@@ -14,6 +14,17 @@
 #
 # Disclaimer: Do not steal other peoples money, that's bad.
 
+# The math
+# Q=dP compute public key Q where d is a secret scalar and G the base point
+# (x1,y1)=kP where k is random choosen an secret
+# r= x1 mod n
+# compute k**-1 or inv(k)
+# compute z=hash(m)
+# s= inv(k)(z + d) mod n
+# sig=k(r,s) or (r,-s mod n)
+
+# Key recovery
+# d = (sk-z)/r where r is the same 
 
 import hashlib
 

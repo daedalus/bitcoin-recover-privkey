@@ -22,7 +22,6 @@
 # compute z=hash(m)
 # s= inv(k)(z + d) mod n
 # sig=k(r,s) or (r,-s mod n)
-
 # Key recovery
 # d = (sk-z)/r where r is the same 
 

@@ -141,19 +141,27 @@ def inverse_mult(a,b,p):
 def derivate_privkey(p,r,s1,s2,z1,z2):
         privkey = []
 
+        s1ms2 = s1-s2
+        s1ps2 = s1+s2
+        ms1ms2 = -s1-s2
+        ms1ps2 = -s1+s2
         z1ms2 = z1*s2
         z2ms1 = z2*s1
         z1s2mz2s1 = z1ms2-z2ms1
         z1s2pz2s1 = z1ms2+z2ms1
+        rs1ms2 = r*s1ms2
+        rs1ps2 = r*s1ps2
+        rms1ms2 = r*ms1ms2
+        rms1ps2 = r*ms1ps2
 
-        privkey.append((inverse_mult((z1s2mz2s1),(r*(s1-s2)),p) % int(p)))
-        privkey.append((inverse_mult((z1s2mz2s1),(r*(s1+s2)),p) % int(p)))
-        privkey.append((inverse_mult((z1s2mz2s1),(r*(-s1-s2)),p) % int(p)))
-        privkey.append((inverse_mult((z1s2mz2s1),(r*(-s1+s2)),p) % int(p)))
-        privkey.append((inverse_mult((z1s2pz2s1),(r*(s1-s2)),p) % int(p)))
-        privkey.append((inverse_mult((z1s2pz2s1),(r*(s1+s2)),p) % int(p)))
-        privkey.append((inverse_mult((z1s2pz2s1),(r*(-s1-s2)),p) % int(p)))
-        privkey.append((inverse_mult((z1s2pz2s1),(r*(-s1+s2)),p) % int(p)))
+        privkey.append(inverse_mult(z1s2mz2s1,rs1ms2,p) % p)
+        privkey.append(inverse_mult(z1s2mz2s1,rs1ps2,p) % p)
+        privkey.append(inverse_mult(z1s2mz2s1,rms1ms2,p) % p)
+        privkey.append(inverse_mult(z1s2mz2s1,rms1ps2,p) % p)
+        privkey.append(inverse_mult(z1s2pz2s1,rs1ms2,p) % p)
+        privkey.append(inverse_mult(z1s2pz2s1,rs1ps2,p) % p)
+        privkey.append(inverse_mult(z1s2pz2s1,rms1ms2,p) % p)
+        privkey.append(inverse_mult(z1s2pz2s1,rms1ps2,p) % p)
 
         return privkey
 

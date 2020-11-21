@@ -113,21 +113,21 @@ def der_decode(hexstring):
                 return None
 
 def show_results(privkeys):
-		print "Posible Candidates..."
+		print("Posible Candidates...")
 		for privkey in privkeys:
         		hexprivkey = inttohexstr(privkey)
-			print "intPrivkey = %d"  % privkey
-			print "hexPrivkey = %s" % hexprivkey
-			print "bitcoin Privkey (WIF) = %s" % base58_check_encode(hexprivkey.decode('hex'),version=128)
-			print "bitcoin Privkey (WIF compressed) = %s" % base58_check_encode((hexprivkey + "01").decode('hex'),version=128)
+			print("intPrivkey = %d"  % privkey)
+			print("hexPrivkey = %s" % hexprivkey)
+			print("bitcoin Privkey (WIF) = %s" % base58_check_encode(hexprivkey.decode('hex'),version=128))
+			print("bitcoin Privkey (WIF compressed) = %s" % base58_check_encode((hexprivkey + "01").decode('hex'),version=128))
 
 
 def show_params(params):
 	for param in params:
 		try:
-			print "%s: %s" % (param,inttohexstr(params[param]))
+			print("%s: %s" % (param,inttohexstr(params[param])))
 		except:
-			print "%s: %s" % (param,params[param])
+			print("%s: %s" % (param,params[param]))
 
 # By the Fermat's little theorem we can say that:
 # a * pow(b,p-2,p) is the same as (a/b mod p) 

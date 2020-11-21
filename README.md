@@ -8,9 +8,11 @@ Proof of concept of bitcoin private key recovery using weak ECDSA signatures
 
 ```
 Based on http://www.nilsschneider.net/2013/01/28/recovering-bitcoin-private-keys.html
-Regarding Bitcoin Tx https://blockchain.info/tx/9ec4bc49e828d924af1d1029cacf709431abbde46d59554b62bc270e3b29c4b1.
-As it's said in the previous article you need to poke around into the OP_CHECKSIG function in order to get z1 and z2,
-in other hand for every other parameters you should be able to get them from the Tx itself.
+Regarding Bitcoin Tx:
+https://blockchain.info/tx/9ec4bc49e828d924af1d1029cacf709431abbde46d59554b62bc270e3b29c4b1.
+As it's said in the previous article you need to poke around into the OP_CHECKSIG 
+function in order to get z1 and z2,
+In other hand for every other parameters you should be able to get them from the Tx itself.
 ```
 
 ### ECDSA math recap: ###

@@ -56,9 +56,9 @@ def unhexify (s, flip=False):
         return s.decode ('hex')
 
 def inttohexstr(i):
-	tmpstr = hex(i)
-	hexstr = tmpstr.replace('0x','').replace('L','').zfill(64)
-	return hexstr
+    tmpstr = hex(i)
+    hexstr = tmpstr.replace('0x','').replace('L','').zfill(64)
+    return hexstr
 
 b58_digits = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
@@ -93,41 +93,40 @@ def base58_check_encode(s, version=0):
     return base58_encode_padded(vs + check)
 
 def get_der_field(i,binary):
-        if (ord(binary[i]) == 2):
-                length = binary[i+1]
-                end = i + ord(length) + 2
-                string = binary[i+2:end]
-                return string
-        else:
-                return None
+    if (ord(binary[i]) == 2):
+        length = binary[i+1]
+        end = i + ord(length) + 2
+        string = binary[i+2:end]
+        return string
+    else:
+        return None
 
 # Here we decode a DER encoded string separating r and s
 def der_decode(hexstring):
-        binary = unhexify(hexstring)
-        full_length = ord(binary[1])
-        if ((full_length + 3) == len(binary)):
-                r = get_der_field(2,binary)
-                s = get_der_field(len(r)+4,binary)
-                return r,s
-        else:
-                return None
+    binary = unhexify(hexstring)
+    full_length = ord(binary[1])
+    if ((full_length + 3) == len(binary)):
+        r = get_der_field(2,binary)
+        s = get_der_field(len(r)+4,binary)  
+        return r,s
+    else:
+        return None
 
 def show_results(privkeys):
-		print("Posible Candidates...")
-		for privkey in privkeys:
-        		hexprivkey = inttohexstr(privkey)
-			print("intPrivkey = %d"  % privkey)
-			print("hexPrivkey = %s" % hexprivkey)
-			print("bitcoin Privkey (WIF) = %s" % base58_check_encode(hexprivkey.decode('hex'),version=128))
-			print("bitcoin Privkey (WIF compressed) = %s" % base58_check_encode((hexprivkey + "01").decode('hex'),version=128))
-
+    print("Posible Candidates...")
+    for privkey in privkeys:
+        hexprivkey = inttohexstr(privkey)
+        print("intPrivkey = %d"  % privkey)
+        print("hexPrivkey = %s" % hexprivkey)
+        print("bitcoin Privkey (WIF) = %s" % base58_check_encode(hexprivkey.decode('hex'),version=128))
+        print("bitcoin Privkey (WIF compressed) = %s" % base58_check_encode((hexprivkey + "01").decode('hex'),version=128))
 
 def show_params(params):
-	for param in params:
-		try:
-			print("%s: %s" % (param,inttohexstr(params[param])))
-		except:
-			print("%s: %s" % (param,params[param]))
+    for param in params:
+        try:
+            print("%s: %s" % (param,inttohexstr(params[param])))
+        except:
+            print("%s: %s" % (param,params[param]))
 
 # By the Fermat's little theorem we can say that:
 # a * pow(b,p-2,p) is the same as (a/b mod p) 
@@ -135,68 +134,68 @@ def show_params(params):
 # and beacuse this the python built in division isn't suitable for our needs,
 # it returns floating point numbers rounded and we don't want them.
 def inverse_mult(a,b,p):
-	y =  (a * pow(b,p-2,p))  #(pow(a, b) modulo p) where p should be a prime number
-	return y
+    y =  (a * pow(b,p-2,p))  #(pow(a, b) modulo p) where p should be a prime number
+    return y
 
 # Here is the wrock!
 def derivate_privkey(p,r,s1,s2,z1,z2):
-        privkey = []
+    privkey = []
 
-        s1ms2 = s1-s2
-        s1ps2 = s1+s2
-        ms1ms2 = -s1-s2
-        ms1ps2 = -s1+s2
-        z1ms2 = z1*s2
-        z2ms1 = z2*s1
-        z1s2mz2s1 = z1ms2-z2ms1
-        z1s2pz2s1 = z1ms2+z2ms1
-        rs1ms2 = r*s1ms2
-        rs1ps2 = r*s1ps2
-        rms1ms2 = r*ms1ms2
-        rms1ps2 = r*ms1ps2
+    s1ms2 = s1-s2
+    s1ps2 = s1+s2
+    ms1ms2 = -s1-s2
+    ms1ps2 = -s1+s2
+    z1ms2 = z1*s2
+    z2ms1 = z2*s1
+    z1s2mz2s1 = z1ms2-z2ms1
+    z1s2pz2s1 = z1ms2+z2ms1
+    rs1ms2 = r*s1ms2
+    rs1ps2 = r*s1ps2
+    rms1ms2 = r*ms1ms2
+    rms1ps2 = r*ms1ps2
 
-        privkey.append(inverse_mult(z1s2mz2s1,rs1ms2,p) % p)
-        privkey.append(inverse_mult(z1s2mz2s1,rs1ps2,p) % p)
-        privkey.append(inverse_mult(z1s2mz2s1,rms1ms2,p) % p)
-        privkey.append(inverse_mult(z1s2mz2s1,rms1ps2,p) % p)
-        privkey.append(inverse_mult(z1s2pz2s1,rs1ms2,p) % p)
-        privkey.append(inverse_mult(z1s2pz2s1,rs1ps2,p) % p)
-        privkey.append(inverse_mult(z1s2pz2s1,rms1ms2,p) % p)
-        privkey.append(inverse_mult(z1s2pz2s1,rms1ps2,p) % p)
+    privkey.append(inverse_mult(z1s2mz2s1,rs1ms2,p) % p)
+    privkey.append(inverse_mult(z1s2mz2s1,rs1ps2,p) % p)
+    privkey.append(inverse_mult(z1s2mz2s1,rms1ms2,p) % p)
+    privkey.append(inverse_mult(z1s2mz2s1,rms1ps2,p) % p)
+    privkey.append(inverse_mult(z1s2pz2s1,rs1ms2,p) % p)
+    privkey.append(inverse_mult(z1s2pz2s1,rs1ps2,p) % p)
+    privkey.append(inverse_mult(z1s2pz2s1,rms1ms2,p) % p)
+    privkey.append(inverse_mult(z1s2pz2s1,rms1ps2,p) % p)
 
-        return privkey
+    return privkey
 
 def process_signatures(params):
 
-	p = params['p']
-	sig1 = params['sig1']
-	sig2 = params['sig2']
-	z1 = params['z1']
-	z2 = params['z2']
+    p = params['p']
+    sig1 = params['sig1']
+    sig2 = params['sig2']
+    z1 = params['z1']
+    z2 = params['z2']
 
-	tmp_r1,tmp_s1 = der_decode(sig1) # Here we extract r and s from the signature encoded in DER.
-	tmp_r2,tmp_s2 = der_decode(sig2) # Idem.
+    tmp_r1,tmp_s1 = der_decode(sig1) # Here we extract r and s from the signature encoded in DER.
+    tmp_r2,tmp_s2 = der_decode(sig2) # Idem.
 
-	# the key of ECDSA are the integer numbers thats why we convert hexa from to them.
-	r1 = int(tmp_r1.encode('hex'),16)
-	r2 = int(tmp_r2.encode('hex'),16)
-	s1 = int(tmp_s1.encode('hex'),16)
-	s2 = int(tmp_s2.encode('hex'),16)
+    # the key of ECDSA are the integer numbers thats why we convert hexa from to them.
+    r1 = int(tmp_r1.encode('hex'),16)
+    r2 = int(tmp_r2.encode('hex'),16)
+    s1 = int(tmp_s1.encode('hex'),16)
+    s2 = int(tmp_s2.encode('hex'),16)
 
-	if (r1 == r2): # If r1 and r2 are equal the two signatures are weak and we can recover the private key.
- 		if (s1 != s2): # This: (s1-s2)>0 should be complied in order be able to compute the private key.
-			privkey = derivate_privkey(p,r1,s1,s2,z1,z2)
-			return privkey
-		else:
-			raise Exception("Privkey not computable: s1 and s2 are equal.")
-	else:
-		raise Exception("Privkey not computable: r1 and r2 are not equal.")
+    if (r1 == r2): # If r1 and r2 are equal the two signatures are weak and we can recover the private key.
+        if (s1 != s2): # This: (s1-s2)>0 should be complied in order be able to compute the private key.
+            privkey = derivate_privkey(p,r1,s1,s2,z1,z2)
+            return privkey
+        else:
+            raise Exception("Privkey not computable: s1 and s2 are equal.")
+    else:
+        raise Exception("Privkey not computable: r1 and r2 are not equal.")
 
 def main():
-	show_params(params)
-	privkey = process_signatures(params)
-	if len(privkey)>0:
-		show_results(privkey)
+    show_params(params)
+    privkey = process_signatures(params)
+    if len(privkey)>0:
+        show_results(privkey)
 
 if __name__ == "__main__":
     main()

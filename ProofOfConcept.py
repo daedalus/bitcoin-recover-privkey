@@ -93,7 +93,7 @@ def base58_check_encode(s, version=0):
     return base58_encode_padded(vs + check)
 
 def get_der_field(i,binary):
-        if (ord(binary[i]) == 02):
+        if (ord(binary[i]) == 2):
                 length = binary[i+1]
                 end = i + ord(length) + 2
                 string = binary[i+2:end]

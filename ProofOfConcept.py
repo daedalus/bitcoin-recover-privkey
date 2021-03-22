@@ -69,12 +69,6 @@ def unhexify(s, flip=False):
         return s.decode('hex')
 
 
-def inttohexstr(i):
-    tmpstr = hex(i)
-    hexstr = tmpstr.replace('0x', '').replace('L', '').zfill(64)
-    return hexstr
-
-
 def dhash(s):
     return hashlib.sha256(hashlib.sha256(s).digest()).digest()
 
@@ -135,9 +129,8 @@ def der_decode(hexstring):
 def show_results(privkeys):
     print("Posible Candidates...")
     for privkey in privkeys:
-        hexprivkey = inttohexstr(privkey)
         print("intPrivkey = %d" % privkey)
-        print("hexPrivkey = %s" % hexprivkey)
+        print("hexPrivkey = %064x" % privkey)
         wif = base58_check_encode(hexprivkey.decode('hex'), version=128)
         print("bitcoin Privkey (WIF) = %s" % wif)
         wif = base58_check_encode((hexprivkey + "01").decode('hex'), version=128)
@@ -147,7 +140,7 @@ def show_results(privkeys):
 def show_params(params):
     for param in params:
         try:
-            print("%s: %s" % (param, inttohexstr(params[param])))
+            print("%s: %064x" % (param, params[param]))
         except TypeError:
             print("%s: %s" % (param, params[param]))
 

@@ -145,12 +145,12 @@ def show_params(params):
             print("%s: %s" % (param, params[param]))
 
 
-# By the Fermat's little theorem we can say that:
-# a * pow(b,p-2,p) % p is the same as (a/b mod p)
-# This is needed to avoid floating numbers since we are dealing with prime numbers
-# and beacuse this the python built in division isn't suitable for our needs,
-# it returns floating point numbers rounded and we don't want them.
 def inverse_mult(a, b, p):
+    """ By the Fermat's little theorem we can say that:
+    a * pow(b,p-2,p) % p is the same as (a/b mod p)
+    This is needed to avoid floating numbers since we are dealing with prime numbers
+    and beacuse this the python built in division isn't suitable for our needs,
+    it returns floating point numbers rounded and we don't want them."""
     y = (a * pow(b, p - 2, p)) % p  # (pow(a, b) modulo p) where p should be a prime number
     return y
 

@@ -28,7 +28,9 @@
 # Key recovery
 # d = (sk-z)/r where r is the same
 
+import sys
 import hashlib
+import binascii
 
 b58_digits = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
@@ -55,20 +57,6 @@ der_sig2 += "01"
 params = {"p": p, "sig1": der_sig1, "sig2": der_sig2, "z1": z1, "z2": z2}
 
 
-def hexify(s, flip=False):
-    if flip:
-        return s[::-1].encode("hex")
-    else:
-        return s.encode("hex")
-
-
-def unhexify(s, flip=False):
-    if flip:
-        return s.decode("hex")[::-1]
-    else:
-        return s.decode("hex")
-
-
 def dhash(s):
     return hashlib.sha256(hashlib.sha256(s).digest()).digest()
 
@@ -88,23 +76,32 @@ def base58_encode(n):
 
 
 def base58_encode_padded(s):
-    res = base58_encode(int("0x" + s.encode("hex"), 16))
+    if sys.version_info[0] < 3:
+        res = base58_encode(int("0x" + s.encode("hex"), 16))
+    else:
+        a = binascii.hexlify(s).decode("utf8")
+        if len(a) % 2 != 0:
+            a = "0" + a
+        res = base58_encode(int("0x" + a,16))
     pad = 0
     for c in s:
         if c == chr(0):
             pad += 1
         else:
             break
-    return b58_digits[0] * pad + res
+    return (b58_digits[0] * pad) + res
 
 
 def base58_check_encode(s, version=0):
-    vs = chr(version) + s
+    if sys.version_info[0] < 3:
+        vs = chr(version) + s
+    else:
+        vs = version.to_bytes(1, byteorder='big') + s 
     check = dhash(vs)[:4]
     return base58_encode_padded(vs + check)
 
 
-def get_der_field(i, binary):
+def py2_get_der_field(i, binary):
     if ord(binary[i]) == 2:
         length = binary[i + 1]
         end = i + ord(length) + 2
@@ -113,27 +110,49 @@ def get_der_field(i, binary):
     else:
         return None
 
+def py3_get_der_field(i, binary):
+    if binary[i] == 2:
+        length = binary[i + 1]
+        end = i + length + 2
+        string = binary[i + 2 : end] 
+        return string
+    else:
+        return None
+
+
 
 # Here we decode a DER encoded string separating r and s
-def der_decode(hexstring):
-    binary = unhexify(hexstring)
+def py2_der_decode(hexstring):
+    binary = binascii.unhexlify(hexstring)
     full_length = ord(binary[1])
     if (full_length + 3) == len(binary):
-        r = get_der_field(2, binary)
-        s = get_der_field(len(r) + 4, binary)
+        r = py2_get_der_field(2, binary)
+        s = py2_get_der_field(len(r) + 4, binary)
         return r, s
     else:
         return None
+
+def py3_der_decode(hexstring):
+    binary = binascii.unhexlify(hexstring)
+    full_length = binary[1]
+    if (full_length + 3) == len(binary):
+        r = py3_get_der_field(2, binary)
+        s = py3_get_der_field(len(r) + 4, binary)
+        return r, s
+    else:
+        return None
+
 
 
 def show_results(privkeys):
     print("Posible Candidates...")
     for privkey in privkeys:
         print("intPrivkey = %d" % privkey)
-        print("hexPrivkey = %064x" % privkey)
-        wif = base58_check_encode(hexprivkey.decode("hex"), version=128)
+        hexprivkey = "%064x" % privkey
+        print("hexPrivkey = %s" % hexprivkey)
+        wif = base58_check_encode(binascii.unhexlify(hexprivkey), version=128)
         print("bitcoin Privkey (WIF) = %s" % wif)
-        wif = base58_check_encode((hexprivkey + "01").decode("hex"), version=128)
+        wif = base58_check_encode(binascii.unhexlify(hexprivkey + "01"), version=128)
         print("bitcoin Privkey (WIF compressed) = %s" % wif)
 
 
@@ -158,7 +177,23 @@ def inverse_mult(a, b, p):
 
 
 # Here is the wrock!
-def derivate_privkey(p, r, s1, s2, z1, z2):
+def derivate_privkey(p,r,s1,s2,z1,z2):
+    privkey = []
+	
+    privkey.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(s1-s2)),p) % int(p)))
+    privkey.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(s1+s2)),p) % int(p)))
+    privkey.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(-s1-s2)),p) % int(p)))
+    privkey.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(-s1+s2)),p) % int(p)))
+	
+    privkey.append((inverse_mult(((z1*s2) + (z2*s1)),(r*(s1-s2)),p) % int(p)))
+    privkey.append((inverse_mult(((z1*s2) + (z2*s1)),(r*(s1+s2)),p) % int(p)))
+    privkey.append((inverse_mult(((z1*s2) + (z2*s1)),(r*(-s1-s2)),p) % int(p)))
+    privkey.append((inverse_mult(((z1*s2) + (z2*s1)),(r*(-s1+s2)),p) % int(p)))
+
+    return privkey
+
+
+def derivate_privkey_fast(p, r, s1, s2, z1, z2):
     privkey = []
 
     s1ms2 = s1 - s2
@@ -194,21 +229,31 @@ def process_signatures(params):
     z1 = params["z1"]
     z2 = params["z2"]
 
-    tmp_r1, tmp_s1 = der_decode(sig1)  # Here we extract r and s from the DER signature.
-    tmp_r2, tmp_s2 = der_decode(sig2)  # Idem.
-
     # the key of ECDSA are the integer numbers thats why we convert hexa from to them.
-    r1 = int(tmp_r1.encode("hex"), 16)
-    r2 = int(tmp_r2.encode("hex"), 16)
-    s1 = int(tmp_s1.encode("hex"), 16)
-    s2 = int(tmp_s2.encode("hex"), 16)
+    if sys.version_info[0] < 3:
+        tmp_r1, tmp_s1 = py2_der_decode(sig1)  # Here we extract r and s from the DER signature.
+        tmp_r2, tmp_s2 = py2_der_decode(sig2)  # Idem.
+
+        r1 = int(tmp_r1.encode("hex"), 16)
+        r2 = int(tmp_r2.encode("hex"), 16)
+        s1 = int(tmp_s1.encode("hex"), 16)
+        s2 = int(tmp_s2.encode("hex"), 16)
+    else:
+        tmp_r1, tmp_s1 = py3_der_decode(sig1)  # Here we extract r and s from the DER signature.
+        tmp_r2, tmp_s2 = py3_der_decode(sig2)  # Idem.
+
+        r1 = int(binascii.hexlify(tmp_r1), 16)
+        r2 = int(binascii.hexlify(tmp_r2), 16)
+        s1 = int(binascii.hexlify(tmp_s1), 16)
+        s2 = int(binascii.hexlify(tmp_s2), 16)
+
 
     # If r1 and r2 are equal the two signatures are weak
     # and we can recover the private key.
 
     if r1 == r2:
         if s1 != s2:  # This:(s1-s2)>0 should be complied in order be able to compute.
-            privkey = derivate_privkey(p, r1, s1, s2, z1, z2)
+            privkey = derivate_privkey_fast(p, r1, s1, s2, z1, z2)
             return privkey
         else:
             raise Exception("Privkey not computable: s1 and s2 are equal.")

@@ -57,14 +57,8 @@ der_sig2 += "01"
 params = {"p": p, "sig1": der_sig1, "sig2": der_sig2, "z1": z1, "z2": z2}
 
 
-def dhash(s):
-    return hashlib.sha256(hashlib.sha256(s).digest()).digest()
-
-
-def rhash(s):
-    h1 = hashlib.new("ripemd160")
-    h1.update(hashlib.sha256(s).digest())
-    return h1.digest()
+dhash = lambda s: hashlib.sha256(hashlib.sha256(s).digest()).digest()
+rhash = lambda s: hashlib.new("ripemd160").update(hashlib.sha256(s).digest()).digest()
 
 
 def base58_encode(n):
@@ -82,7 +76,7 @@ def base58_encode_padded(s):
         a = binascii.hexlify(s).decode("utf8")
         if len(a) % 2 != 0:
             a = "0" + a
-        res = base58_encode(int("0x" + a,16))
+        res = base58_encode(int("0x" + a, 16))
     pad = 0
     for c in s:
         if c == chr(0):
@@ -96,7 +90,7 @@ def base58_check_encode(s, version=0):
     if sys.version_info[0] < 3:
         vs = chr(version) + s
     else:
-        vs = version.to_bytes(1, byteorder='big') + s 
+        vs = version.to_bytes(1, byteorder="big") + s
     check = dhash(vs)[:4]
     return base58_encode_padded(vs + check)
 
@@ -110,15 +104,15 @@ def py2_get_der_field(i, binary):
     else:
         return None
 
+
 def py3_get_der_field(i, binary):
     if binary[i] == 2:
         length = binary[i + 1]
         end = i + length + 2
-        string = binary[i + 2 : end] 
+        string = binary[i + 2 : end]
         return string
     else:
         return None
-
 
 
 # Here we decode a DER encoded string separating r and s
@@ -132,6 +126,7 @@ def py2_der_decode(hexstring):
     else:
         return None
 
+
 def py3_der_decode(hexstring):
     binary = binascii.unhexlify(hexstring)
     full_length = binary[1]
@@ -141,7 +136,6 @@ def py3_der_decode(hexstring):
         return r, s
     else:
         return None
-
 
 
 def show_results(privkeys):
@@ -164,38 +158,31 @@ def show_params(params):
             print("%s: %s" % (param, params[param]))
 
 
-def inverse_mult(a, b, p):
-    """By the Fermat's little theorem we can say that:
-    a * pow(b,p-2,p) % p is the same as (a/b mod p)
-    This is needed to avoid floating numbers since we are dealing with prime numbers
-    and beacuse this the python built in division isn't suitable for our needs,
-    it returns floating point numbers rounded and we don't want them."""
-    y = (
-        a * pow(b, p - 2, p)
-    ) % p  # (pow(a, b) modulo p) where p should be a prime number
-    return y
+"""By the Fermat's little theorem we can say that:
+a * pow(b,p-2,p) % p is the same as (a/b mod p)
+This is needed to avoid floating numbers since we are dealing with prime numbers
+and beacuse this the python built in division isn't suitable for our needs,
+it returns floating point numbers rounded and we don't want them."""
+inverse_mult = lambda a, b, p: a * pow(b, p - 2, p)
 
 
 # Here is the wrock!
-def derivate_privkey(p,r,s1,s2,z1,z2):
+def derivate_privkey(p, r, s1, s2, z1, z2):
     privkey = []
-	
-    privkey.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(s1-s2)),p) % int(p)))
-    privkey.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(s1+s2)),p) % int(p)))
-    privkey.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(-s1-s2)),p) % int(p)))
-    privkey.append((inverse_mult(((z1*s2) - (z2*s1)),(r*(-s1+s2)),p) % int(p)))
-	
-    privkey.append((inverse_mult(((z1*s2) + (z2*s1)),(r*(s1-s2)),p) % int(p)))
-    privkey.append((inverse_mult(((z1*s2) + (z2*s1)),(r*(s1+s2)),p) % int(p)))
-    privkey.append((inverse_mult(((z1*s2) + (z2*s1)),(r*(-s1-s2)),p) % int(p)))
-    privkey.append((inverse_mult(((z1*s2) + (z2*s1)),(r*(-s1+s2)),p) % int(p)))
+
+    privkey.append((inverse_mult(((z1 * s2) - (z2 * s1)), (r * (s1 - s2)), p) % int(p)))
+    privkey.append((inverse_mult(((z1 * s2) - (z2 * s1)), (r * (s1 + s2)), p) % int(p)))
+    privkey.append((inverse_mult(((z1 * s2) - (z2 * s1)), (r * (-s1 - s2)), p) % int(p)))
+    privkey.append((inverse_mult(((z1 * s2) - (z2 * s1)), (r * (-s1 + s2)), p) % int(p)))
+    privkey.append((inverse_mult(((z1 * s2) + (z2 * s1)), (r * (s1 - s2)), p) % int(p)))
+    privkey.append((inverse_mult(((z1 * s2) + (z2 * s1)), (r * (s1 + s2)), p) % int(p)))
+    privkey.append((inverse_mult(((z1 * s2) + (z2 * s1)), (r * (-s1 - s2)), p) % int(p)))
+    privkey.append((inverse_mult(((z1 * s2) + (z2 * s1)), (r * (-s1 + s2)), p) % int(p)))
 
     return privkey
 
 
 def derivate_privkey_fast(p, r, s1, s2, z1, z2):
-    privkey = []
-
     s1ms2 = s1 - s2
     s1ps2 = s1 + s2
     ms1ms2 = -s1 - s2
@@ -209,20 +196,21 @@ def derivate_privkey_fast(p, r, s1, s2, z1, z2):
     rms1ms2 = r * ms1ms2
     rms1ps2 = r * ms1ps2
 
-    privkey.append(inverse_mult(z1s2mz2s1, rs1ms2, p))
-    privkey.append(inverse_mult(z1s2mz2s1, rs1ps2, p))
-    privkey.append(inverse_mult(z1s2mz2s1, rms1ms2, p))
-    privkey.append(inverse_mult(z1s2mz2s1, rms1ps2, p))
-    privkey.append(inverse_mult(z1s2pz2s1, rs1ms2, p))
-    privkey.append(inverse_mult(z1s2pz2s1, rs1ps2, p))
-    privkey.append(inverse_mult(z1s2pz2s1, rms1ms2, p))
-    privkey.append(inverse_mult(z1s2pz2s1, rms1ps2, p))
+    privkey = [
+        inverse_mult(z1s2mz2s1, rs1ms2, p),
+        inverse_mult(z1s2mz2s1, rs1ps2, p),
+        inverse_mult(z1s2mz2s1, rms1ms2, p),
+        inverse_mult(z1s2mz2s1, rms1ps2, p),
+        inverse_mult(z1s2pz2s1, rs1ms2, p),
+        inverse_mult(z1s2pz2s1, rs1ps2, p),
+        inverse_mult(z1s2pz2s1, rms1ms2, p),
+        inverse_mult(z1s2pz2s1, rms1ps2, p),
+    ]
 
     return privkey
 
 
 def process_signatures(params):
-
     p = params["p"]
     sig1 = params["sig1"]
     sig2 = params["sig2"]
@@ -246,7 +234,6 @@ def process_signatures(params):
         r2 = int(binascii.hexlify(tmp_r2), 16)
         s1 = int(binascii.hexlify(tmp_s1), 16)
         s2 = int(binascii.hexlify(tmp_s2), 16)
-
 
     # If r1 and r2 are equal the two signatures are weak
     # and we can recover the private key.

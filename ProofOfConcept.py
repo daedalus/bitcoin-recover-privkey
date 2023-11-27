@@ -42,15 +42,17 @@ p = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 z1 = 0xC0E2D0A89A348DE88FDA08211C70D1D7E52CCEF2EB9459911BF977D587784C6E
 z2 = 0x17B0F41C8C337AC1E18C98759E83A8CCCBC368DD9D89E5F03CB633C265FD0DDC
 
-# r1 and s1 are contained in this ECDSA signature encoded in DER (openssl default).
-der_sig1 = "3044"
-der_sig1 += "0220d47ce4c025c35ec440bc81d99834a624875161a26bf56ef7fdc0f5d52f843ad1"
+der_sig1 = (
+    "3044"
+    + "0220d47ce4c025c35ec440bc81d99834a624875161a26bf56ef7fdc0f5d52f843ad1"
+)
 der_sig1 += "022044e1ff2dfd8102cf7a47c21d5c9fd5701610d04953c6836596b4fe9dd2f53e3e"
 der_sig1 += "01"
 
-# the same thing with the above line.
-der_sig2 = "3044"
-der_sig2 += "0220d47ce4c025c35ec440bc81d99834a624875161a26bf56ef7fdc0f5d52f843ad1"
+der_sig2 = (
+    "3044"
+    + "0220d47ce4c025c35ec440bc81d99834a624875161a26bf56ef7fdc0f5d52f843ad1"
+)
 der_sig2 += "02209a5f1c75e461d7ceb1cf3cab9013eb2dc85b6d0da8c3c6e27e3a5a5b3faa5bab"
 der_sig2 += "01"
 
@@ -75,8 +77,8 @@ def base58_encode_padded(s):
     else:
         a = binascii.hexlify(s).decode("utf8")
         if len(a) % 2 != 0:
-            a = "0" + a
-        res = base58_encode(int("0x" + a, 16))
+            a = f"0{a}"
+        res = base58_encode(int(f"0x{a}", 16))
     pad = 0
     for c in s:
         if c == chr(0):
@@ -99,8 +101,7 @@ def py2_get_der_field(i, binary):
     if ord(binary[i]) == 2:
         length = binary[i + 1]
         end = i + ord(length) + 2
-        string = binary[i + 2 : end]
-        return string
+        return binary[i + 2 : end]
     else:
         return None
 
@@ -109,8 +110,7 @@ def py3_get_der_field(i, binary):
     if binary[i] == 2:
         length = binary[i + 1]
         end = i + length + 2
-        string = binary[i + 2 : end]
-        return string
+        return binary[i + 2 : end]
     else:
         return None
 
@@ -119,23 +119,21 @@ def py3_get_der_field(i, binary):
 def py2_der_decode(hexstring):
     binary = binascii.unhexlify(hexstring)
     full_length = ord(binary[1])
-    if (full_length + 3) == len(binary):
-        r = py2_get_der_field(2, binary)
-        s = py2_get_der_field(len(r) + 4, binary)
-        return r, s
-    else:
+    if full_length + 3 != len(binary):
         return None
+    r = py2_get_der_field(2, binary)
+    s = py2_get_der_field(len(r) + 4, binary)
+    return r, s
 
 
 def py3_der_decode(hexstring):
     binary = binascii.unhexlify(hexstring)
     full_length = binary[1]
-    if (full_length + 3) == len(binary):
-        r = py3_get_der_field(2, binary)
-        s = py3_get_der_field(len(r) + 4, binary)
-        return r, s
-    else:
+    if full_length + 3 != len(binary):
         return None
+    r = py3_get_der_field(2, binary)
+    s = py3_get_der_field(len(r) + 4, binary)
+    return r, s
 
 
 def show_results(privkeys):
@@ -143,11 +141,11 @@ def show_results(privkeys):
     for privkey in privkeys:
         print("intPrivkey = %d" % privkey)
         hexprivkey = "%064x" % privkey
-        print("hexPrivkey = %s" % hexprivkey)
+        print(f"hexPrivkey = {hexprivkey}")
         wif = base58_check_encode(binascii.unhexlify(hexprivkey), version=128)
-        print("bitcoin Privkey (WIF) = %s" % wif)
-        wif = base58_check_encode(binascii.unhexlify(hexprivkey + "01"), version=128)
-        print("bitcoin Privkey (WIF compressed) = %s" % wif)
+        print(f"bitcoin Privkey (WIF) = {wif}")
+        wif = base58_check_encode(binascii.unhexlify(f"{hexprivkey}01"), version=128)
+        print(f"bitcoin Privkey (WIF compressed) = {wif}")
 
 
 def show_params(params):
@@ -155,7 +153,7 @@ def show_params(params):
         try:
             print("%s: %064x" % (param, params[param]))
         except TypeError:
-            print("%s: %s" % (param, params[param]))
+            print(f"{param}: {params[param]}")
 
 
 """By the Fermat's little theorem we can say that:
@@ -168,9 +166,8 @@ inverse_mult = lambda a, b, p: a * pow(b, p - 2, p)
 
 # Here is the wrock!
 def derivate_privkey(p, r, s1, s2, z1, z2):
-    privkey = []
+    privkey = [inverse_mult(((z1 * s2) - (z2 * s1)), (r * (s1 - s2)), p) % int(p)]
 
-    privkey.append((inverse_mult(((z1 * s2) - (z2 * s1)), (r * (s1 - s2)), p) % int(p)))
     privkey.append((inverse_mult(((z1 * s2) - (z2 * s1)), (r * (s1 + s2)), p) % int(p)))
     privkey.append((inverse_mult(((z1 * s2) - (z2 * s1)), (r * (-s1 - s2)), p) % int(p)))
     privkey.append((inverse_mult(((z1 * s2) - (z2 * s1)), (r * (-s1 + s2)), p) % int(p)))
@@ -196,7 +193,7 @@ def derivate_privkey_fast(p, r, s1, s2, z1, z2):
     rms1ms2 = r * ms1ms2
     rms1ps2 = r * ms1ps2
 
-    privkey = [
+    return [
         inverse_mult(z1s2mz2s1, rs1ms2, p),
         inverse_mult(z1s2mz2s1, rs1ps2, p),
         inverse_mult(z1s2mz2s1, rms1ms2, p),
@@ -206,8 +203,6 @@ def derivate_privkey_fast(p, r, s1, s2, z1, z2):
         inverse_mult(z1s2pz2s1, rms1ms2, p),
         inverse_mult(z1s2pz2s1, rms1ps2, p),
     ]
-
-    return privkey
 
 
 def process_signatures(params):
@@ -240,8 +235,7 @@ def process_signatures(params):
 
     if r1 == r2:
         if s1 != s2:  # This:(s1-s2)>0 should be complied in order be able to compute.
-            privkey = derivate_privkey_fast(p, r1, s1, s2, z1, z2)
-            return privkey
+            return derivate_privkey_fast(p, r1, s1, s2, z1, z2)
         else:
             raise Exception("Privkey not computable: s1 and s2 are equal.")
     else:
